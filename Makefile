@@ -7,7 +7,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 BINARY_NAME=fsbeacon
 BINARY_UNIX=$(BINARY_NAME)_unix
-MAIN_PATH=cmd/fsbeacon/main.go
+MAIN_PATH=main.go
 
 all: test build
 

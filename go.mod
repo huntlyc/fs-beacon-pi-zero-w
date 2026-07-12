@@ -1,13 +1,7 @@
-module github.com/duckfullstop/blinkybeacon
+module github.com/huntlyc/beacon-pi
 
 go 1.19
 
-require (
-	github.com/spf13/cobra v1.6.1
-	github.com/sstallion/go-hid v0.13.3
-)
+require github.com/duckfullstop/blinkybeacon v0.1.1
 
-require (
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
-)
+require github.com/sstallion/go-hid v0.13.3 // indirect

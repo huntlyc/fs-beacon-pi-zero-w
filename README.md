@@ -1,26 +1,21 @@
-# Blinkybeacon
+# PI Blinkybeacon HTTP REST API
 
 Messing about with [blinkybeacon](https://github.com/duckfullstop/blinkybeacon#) on a pi
 
+**Note**: Needs to run as **root** for the HID access, but opens a simple http server on port 1337 with the following endpoints:
 
-Needs to run as root for the HID access, but opens a simple http server on port 1337 with the following endpoints:
-
-/strobe
-
-/spin
+- /strobe
+- /spin
 
 
-## Instalation 
+## Permanent Instalation 
 
 Only tested on a Raspberry Pi Zero W v1.1!
 
-To make a binary and have it so you can run it by `beacon` do the following steps:
+To make a binary and have it so you can run it by `beacon` do the following steps in the project root to build and then place it so it's available system wide:
 
 ```sh
-# Then in the project root:
 $> make build-pi
-
-# once compiled, put it into /usr/local/bin - change ExecStart if you put it elsewhere!!!
 $> sudo mv fsbeacon /usr/local/bin/beacon && sudo chmod +x /usr/local/bin/beacon
 ```
 
@@ -49,8 +44,8 @@ WantedBy=multi-user.target
 
 Then enable it:
 ```sh
-$> sudo systemctl daemon-reload && sudo systemctl enable beacon && sudo systemctl start beacon"
+$> sudo systemctl daemon-reload && sudo systemctl enable beacon && sudo systemctl start beacon
 ```
 
 
-To test: `wget http://127.0.0.1:1337/spin`
+To test: reboot, ssh in and run `wget http://127.0.0.1:1337/spin`

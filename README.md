@@ -5,10 +5,13 @@ Messing about with [blinkybeacon](https://github.com/duckfullstop/blinkybeacon#)
 **Note**: Needs to run as **root** for the HID access, but opens a simple http server on port 1337 with the following endpoints:
 
 - /strobe
+- /strobe/{time}
 - /spin
+- /spin/{time}
 
+Note time is an numeric value, ranged between 1-10
 
-## Permanent Instalation 
+## Permanent Instalation
 
 Only tested on a Raspberry Pi Zero W v1.1!
 

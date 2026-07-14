@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,29 +10,41 @@ import (
 	"github.com/duckfullstop/blinkybeacon/pkg/fsbeacon"
 )
 
+// DefaultDuration is the duration of the beacon spin or strobe
+// if time not specified.
+const DefaultDuration = 3;
+
 // there can be only one beacon...
 var beaconMu sync.Mutex
+
 
 func main() {
 	http.HandleFunc("GET /favicon.ico", faviconHandler)
 
-	// home
+	// root path
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello, world!"))
+		w.Write([]byte("🚨 Beacon ready! 🚨"))
 	})
 
-	// spin routes, time and default
+	// spin routes
 	http.HandleFunc("GET /spin", spinReqHandler)
 	http.HandleFunc("GET /spin/{time}/", spinReqHandler)
 
-	// stobe routes, time and default
+	// stobe routes
 	http.HandleFunc("GET /strobe/{time}/", strobeReqHandler)
 	http.HandleFunc("GET /strobe", strobeReqHandler)
 
 
-	// catchall
+	// catch all else 404
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
+		err := makeBeaconSpinForDuration(DefaultDuration)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Err"))
+			return
+		}
 		w.WriteHeader(http.StatusNotFound);
 		w.Write([]byte("Like my sanity, not found"))
 	})
@@ -44,9 +55,11 @@ func main() {
 
 
 
+// Returns a time between 1 and 10.
+// If timeStr is not empty, attempt to convert to int
 func getTimeInt(timeStr string) (int, error) {
 	var err error
-	time := 1
+	time := DefaultDuration
 
 	if timeStr != "" {
 		time, err = strconv.Atoi(timeStr)
@@ -62,6 +75,8 @@ func getTimeInt(timeStr string) (int, error) {
 	return time, err
 }
 
+// Gotta have a favicon.
+// Returns an svg for it.
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	// Tell the browser to expect an SVG image
 	w.Header().Set("Content-Type", "image/svg+xml")
@@ -72,12 +87,12 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(emojiSVG))
 }
 
+// Responds to a /spin or /spin/{time} request.
 func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 	timeStr := r.PathValue("time")
 	time, _ := getTimeInt(timeStr)
 
-	fmt.Printf("Spinnning for %v\n", time);
-	err := handleSpin(time)
+	err := makeBeaconSpinForDuration(time)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -88,12 +103,12 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
 
+// Responds to a /spin or /spin/{time} request.
 func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 	timeStr := r.PathValue("time")
 	time, _ := getTimeInt(timeStr)
-	fmt.Printf("stroe for %v\n", time);
 
-	err := handleStrobeBeacon(time)
+	err := makeBeaconStrobeForDuration(time)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,7 +119,8 @@ func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
 
-func handleSpin(t int) error {
+// Makes the beacon spin for 't' seconds.
+func makeBeaconSpinForDuration(t int) error {
 	beaconMu.Lock()
 	defer beaconMu.Unlock()
 
@@ -135,7 +151,8 @@ func handleSpin(t int) error {
 	return nil
 }
 
-func handleStrobeBeacon(t int) error {
+// Makes the beacon strobe for 't' seconds.
+func makeBeaconStrobeForDuration(t int) error {
 	beaconMu.Lock()
 	defer beaconMu.Unlock()
 
@@ -146,8 +163,6 @@ func handleStrobeBeacon(t int) error {
 		return err
 	}
 	defer d.Close()
-
-	fmt.Printf("Strobing beacon for %s.\n", runtime)
 
 	err = d.Flash()
 	if err != nil {

@@ -103,7 +103,7 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
 
-// Responds to a /spin or /spin/{time} request.
+// Responds to a /strobe or /strobe/{time} request.
 func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 	timeStr := r.PathValue("time")
 	time, _ := getTimeInt(timeStr)

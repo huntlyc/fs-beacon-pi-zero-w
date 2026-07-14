@@ -10,9 +10,9 @@ This project is a simple http server on port 1337 that will spin or strobe the f
 
 | Endpoint | Description |
 | :--- | :--- |
-| /strobe | 1s strobe |
+| /strobe | 3s strobe |
 | /strobe/{time} | strobe for *{time}* seconds, whole number between 1-10 |
-| /spin | 1s spin |
+| /spin | 3s spin |
 | /spin/{time} | spin for *{time}* seconds, whole number between 1-10 |
 
 ## Uses

@@ -1,8 +1,10 @@
 # PI Blinkybeacon HTTP REST API
 
-Messing about with [duckfullstop/blinkybeacon](https://github.com/duckfullstop/blinkybeacon#) on a pi
+Built off the hard work here [duckfullstop/blinkybeacon](https://github.com/duckfullstop/blinkybeacon#)
 
-This project is a simple http server on port 1337 that will spin or strobe the beacon.
+Blink or strobe the Fam Sim 22 collectors edition beacon via the web!
+
+This project is a simple http server on port 1337 that will spin or strobe the farm sim physical beacon.
 
 **Note**: Server needs to run as **root** for the HID access.
 

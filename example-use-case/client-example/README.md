@@ -29,5 +29,5 @@ systemctl --user enable --now alarm-repo-check.timer
 crontab -e
 
 # then add the following line, tweak the time to suit
-*/5 * * * * /usr/local/bin/check-upstream.sh
+*/5 * * * * /usr/local/bin/alarm-repo-check.sh
 ```

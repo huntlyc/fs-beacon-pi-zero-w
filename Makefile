@@ -30,3 +30,8 @@ run:
 
 build-pi:
 	env GOOS=linux GOARCH=arm GOARM=6 $(GOBUILD) -o $(BINARY_NAME)-pi -v $(MAIN_PATH)
+
+.PHONY: build-pi2
+
+build-pi2:
+	env GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINARY_NAME)-pi2 -v $(MAIN_PATH)

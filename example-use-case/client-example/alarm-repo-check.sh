@@ -17,8 +17,9 @@ read -r LOCAL REMOTE < <(
 
 # REMOTE is the number of commits we're behind, spin that many times
 if (( REMOTE > 0 )); then
-    echo "Upstream has $REMOTE new commit(s). Triggering beacon..."
-    curl -fsS "$BEACON_URL/spin/$REMOTE/" >/dev/null
+    read -r NAME < <(basename $(pwd))
+    echo "$NAME Upstream has $REMOTE new commit(s). Triggering beacon..."
+    curl -X POST -d "{\"msg\": \"$NAME\nBehind: $REMOTE\"}" -fsS "$BEACON_URL/spin/$REMOTE/" 
 else
     echo "Repository is up to date."
 fi

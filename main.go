@@ -12,6 +12,7 @@ import (
 
 	"github.com/duckfullstop/blinkybeacon/pkg/fsbeacon"
 	"github.com/huntlyc/beacon-pi/lcd"
+	"github.com/warthog618/go-gpiocdev"
 )
 
 // DefaultDuration is the duration of the beacon spin or strobe
@@ -175,6 +176,7 @@ func main() {
 	log.Println("Server running on :1337")
 
 	go printLCDMessage(display, "Beacon Ready")
+	makeBeaconSpinForDuration(1)
 
 	log.Fatal(http.ListenAndServe(":1337", nil))
 }
@@ -232,12 +234,24 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	go printLCDMessage(display, msg)
 
-	err := makeBeaconSpinForDuration(time)
+	isSnoozed, err := isSnoozed()
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Err"))
-		return
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Err"))
+			return
+		}
+	}
+
+	if !isSnoozed {
+		err = makeBeaconSpinForDuration(time)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Err"))
+			return
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("OK"))
@@ -264,12 +278,24 @@ func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	go printLCDMessage(display, msg)
 
-	err := makeBeaconStrobeForDuration(time)
+	isSnoozed, err := isSnoozed()
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Err"))
-		return
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Err"))
+			return
+		}
+	}
+
+	if !isSnoozed {
+		err = makeBeaconStrobeForDuration(time)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Err"))
+			return
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("OK"))
@@ -385,4 +411,30 @@ func printLCDMessage(display *lcd.LCD, msg string) {
 	displayMu.Lock()
 	display.Backlight(false)
 	displayMu.Unlock()
+}
+
+func isSnoozed() (bool, error) {
+	chip, err := gpiocdev.NewChip("gpiochip0")
+	if err != nil {
+		log.Fatal(err)
+		return false, err
+	}
+	defer chip.Close()
+
+	line, err := chip.RequestLine(
+		17,
+		gpiocdev.AsInput,
+		gpiocdev.WithPullUp,
+	)
+	if err != nil {
+		return false, err
+	}
+	defer line.Close()
+
+	value, err := line.Value()
+	if err != nil {
+		return false, err
+	}
+
+	return value != 0, nil
 }

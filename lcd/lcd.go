@@ -4,6 +4,9 @@ import (
 	"time"
 
 	"github.com/d2r2/go-i2c"
+	"github.com/d2r2/go-logger"
+	"github.com/huntlyc/beacon-pi/rgb"
+	"github.com/warthog618/go-gpiocdev"
 )
 
 // DATASHEET: https://cdn-shop.adafruit.com/product-files/399/399+spec+sheet.pdf
@@ -33,13 +36,16 @@ const (
 )
 
 type LCD struct {
-	i2c  *i2c.I2C
-	gpio byte
+	i2c            *i2c.I2C
+	gpio           byte
+	backlightColor rgb.RGB
+	RGBLines       *gpiocdev.Lines
 }
 
 // Initialise the LCD.
 func New(addr uint8, bus int) (*LCD, error) {
 	dev, err := i2c.NewI2C(addr, bus)
+	logger.ChangePackageLogLevel("i2c", logger.InfoLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +83,12 @@ func New(addr uint8, bus int) (*LCD, error) {
 
 	time.Sleep(5 * time.Millisecond)
 
+	var gpioerr error
+	l.RGBLines, gpioerr = gpiocdev.RequestLines("gpiochip0", []int{19, 13, 12}, gpiocdev.AsOutput(0, 0, 0))
+	if gpioerr != nil {
+		return l, gpioerr
+	}
+
 	return l, nil
 }
 
@@ -94,8 +106,11 @@ func (l *LCD) Close() {
 // Leaves all other bits as is
 func (l *LCD) Backlight(on bool) {
 	if on {
+		l.RGBLines.SetValues([]int{0, 0, 0})
+		l.RGBLines.SetValues(l.backlightColor[:])
 		l.gpio |= BACKLIGHT
 	} else {
+		l.RGBLines.SetValues([]int{0, 0, 0})
 		l.gpio &^= BACKLIGHT
 	}
 
@@ -191,4 +206,33 @@ func (l *LCD) writeGPIO() error {
 func (l *LCD) writeRegister(reg byte, value byte) error {
 	_, err := l.i2c.WriteBytes([]byte{reg, value})
 	return err
+}
+
+// Set the lcd colour.
+// Options are:
+// Red
+// Green
+// Blue
+// Orange
+// Teal
+func (l *LCD) SetColour(val rgb.Colour) {
+	carr := colourToRGB(val)
+	l.setColour(carr)
+
+}
+
+func (l *LCD) setColour(val rgb.RGB) {
+	l.backlightColor = val
+}
+
+func colourToRGB(c rgb.Colour) rgb.RGB {
+	var rgb rgb.RGB
+	const bits = 3
+
+	for i := 0; i < bits; i++ {
+		shift := (bits - 1) - i
+		rgb[i] = (int(c) >> shift) & 1 // e.g 010 -> 001 & 001 => 1
+	}
+
+	return rgb
 }

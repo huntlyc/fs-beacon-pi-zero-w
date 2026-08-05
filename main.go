@@ -12,6 +12,7 @@ import (
 
 	"github.com/duckfullstop/blinkybeacon/pkg/fsbeacon"
 	"github.com/huntlyc/beacon-pi/lcd"
+	"github.com/huntlyc/beacon-pi/rgb"
 	"github.com/warthog618/go-gpiocdev"
 )
 
@@ -25,7 +26,18 @@ var displayMu sync.Mutex
 var display *lcd.LCD
 
 type RequestWithMsg struct {
-	Msg string `json:"msg"`
+	Msg   string `json:"msg"`
+	Color string `json:"color"`
+}
+
+var colorMap = map[string]rgb.Colour{
+	"red":    rgb.Red,
+	"green":  rgb.Green,
+	"blue":   rgb.Blue,
+	"white":  rgb.White,
+	"purple": rgb.Pruple,
+	"yellow": rgb.Yellow,
+	"teal":   rgb.Teal,
 }
 
 func main() {
@@ -175,10 +187,11 @@ func main() {
 
 	log.Println("Server running on :1337")
 
-	go printLCDMessage(display, "Beacon Ready")
+	go printLCDMessage(display, "Beacon Ready", rgb.Green)
 	makeBeaconSpinForDuration(1)
 
 	log.Fatal(http.ListenAndServe(":1337", nil))
+
 }
 
 // Returns a time between 1 and 10.
@@ -218,6 +231,7 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 	timeStr := r.PathValue("time")
 	time, _ := getTimeInt(timeStr)
 	msg := "BEACON LIT"
+	color := rgb.Red
 
 	var reqPayload RequestWithMsg
 	if r.Body != nil && r.ContentLength != 0 {
@@ -231,8 +245,13 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 		if reqPayload.Msg != "" {
 			msg = reqPayload.Msg
 		}
+		if reqPayload.Color != "" {
+			if _, ok := colorMap[reqPayload.Color]; ok {
+				color = colorMap[reqPayload.Color]
+			}
+		}
 	}
-	go printLCDMessage(display, msg)
+	go printLCDMessage(display, msg, color)
 
 	isSnoozed, err := isSnoozed()
 	if err != nil {
@@ -262,6 +281,7 @@ func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 	timeStr := r.PathValue("time")
 	time, _ := getTimeInt(timeStr)
 	msg := "BEACON LIT"
+	color := rgb.Red
 
 	var reqPayload RequestWithMsg
 	if r.Body != nil && r.ContentLength != 0 {
@@ -275,8 +295,13 @@ func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 		if reqPayload.Msg != "" {
 			msg = reqPayload.Msg
 		}
+		if reqPayload.Color != "" {
+			if _, ok := colorMap[reqPayload.Color]; ok {
+				color = colorMap[reqPayload.Color]
+			}
+		}
 	}
-	go printLCDMessage(display, msg)
+	go printLCDMessage(display, msg, color)
 
 	isSnoozed, err := isSnoozed()
 	if err != nil {
@@ -388,10 +413,11 @@ func spacePad(s string) string {
 	return s
 }
 
-func printLCDMessage(display *lcd.LCD, msg string) {
+func printLCDMessage(display *lcd.LCD, msg string, color rgb.Colour) {
 
 	displayMu.Lock()
 
+	display.SetColour(color)
 	display.Backlight(true)
 	display.Clear()
 	display.SetCursor(0, 0)
@@ -407,7 +433,7 @@ func printLCDMessage(display *lcd.LCD, msg string) {
 	}
 	displayMu.Unlock()
 
-	time.Sleep(60 * time.Second)
+	time.Sleep(5 * time.Second)
 	displayMu.Lock()
 	display.Backlight(false)
 	displayMu.Unlock()

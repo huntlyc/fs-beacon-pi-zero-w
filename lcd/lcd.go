@@ -166,7 +166,7 @@ func (l *LCD) WriteByte(b byte) error {
 	return l.writeByte(b, true)
 }
 
-func (l *LCD) write4Bits(v byte) error {
+func (l *LCD) write4Bits(v byte, rs bool) error {
 
 	// turn off all data bits
 	l.gpio &^= D4 | D5 | D6 | D7

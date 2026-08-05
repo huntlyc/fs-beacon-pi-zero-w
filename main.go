@@ -255,12 +255,10 @@ func spinReqHandler(w http.ResponseWriter, r *http.Request) {
 
 	isSnoozed, err := isSnoozed()
 	if err != nil {
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Err"))
-			return
-		}
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Err"))
+		return
 	}
 
 	if !isSnoozed {
@@ -305,12 +303,10 @@ func strobeReqHandler(w http.ResponseWriter, r *http.Request) {
 
 	isSnoozed, err := isSnoozed()
 	if err != nil {
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Err"))
-			return
-		}
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Err"))
+		return
 	}
 
 	if !isSnoozed {

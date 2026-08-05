@@ -141,7 +141,7 @@ func (l *LCD) command(v byte) {
 	l.writeByte(v, false)
 }
 
-func (l *LCD) writeByte(v byte, rs bool) {
+func (l *LCD) writeByte(v byte, rs bool) error {
 	// toggle register select
 	if rs {
 		l.gpio |= RS
@@ -149,15 +149,24 @@ func (l *LCD) writeByte(v byte, rs bool) {
 		l.gpio &^= RS
 	}
 
-	l.write4Bits(v>>4, rs)
-	l.write4Bits(v&0x0F, rs)
+	var err error
+	err = l.write4Bits(v>>4, rs)
+	if err != nil {
+		return err
+	}
+
+	err = l.write4Bits(v&0x0F, rs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (l *LCD) WriteByte(b byte) {
-	l.writeByte(b, true)
+func (l *LCD) WriteByte(b byte) error {
+	return l.writeByte(b, true)
 }
 
-func (l *LCD) write4Bits(v byte, rs bool) {
+func (l *LCD) write4Bits(v byte) error {
 
 	// turn off all data bits
 	l.gpio &^= D4 | D5 | D6 | D7
@@ -176,8 +185,12 @@ func (l *LCD) write4Bits(v byte, rs bool) {
 		l.gpio |= D7
 	}
 
-	l.writeGPIO()
+	err := l.writeGPIO()
+	if err != nil {
+		return err
+	}
 	l.pulseEnable()
+	return nil
 }
 
 // make the screen do our bidding
